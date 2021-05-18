@@ -33,13 +33,35 @@ Presenta el menu de opciones y por cada seleccion
 se hace la solicitud al controlador para ejecutar la
 operación solicitada
 """
+connectionsfile = "connections.csv"
+countriesfile = "countries.csv"
+landingpfile = "landing_points.csv"
 
 def printMenu():
+    print("\n")
+    print("*******************************************")
     print("Bienvenido")
-    print("1- Cargar información en el catálogo")
-    print("2- ")
-
+    print("1- Crear el catálogo")
+    print("2- Cargar información en el catálogo")
+    print("3- Encontrar clusters dentro de la red y consultar conexión landing points")
+    print("4- Encontrar puntos de interconexión en la red")
+    print("5- Encontrar ruta mínima entre paises")
+    print("6- Identificar infraestructura mínima")
+    print("7- Identificar impacto de la caida de un landing point")
+    print("8- Identificar ancho de banda máximo de un pais")
+    print("0- Salir")
+    print("*******************************************")
 catalog = None
+
+def optionTwo(cont):
+    print("\nCargando información de los archivos ....")
+    controller.loadData(cont, connectionsfile, countriesfile, landingpfile)
+    numedges = controller.totalConnections(cont)
+    numvertex = controller.totalStops(cont)
+    numcountries = controller.totalCountries(cont)
+    print('Numero de landing points: ' + str(numvertex))
+    print('Numero de cables: ' + str(numedges))
+    print('Numero de paises: ' + str(numcountries))
 
 """
 Menu principal
@@ -48,11 +70,29 @@ while True:
     printMenu()
     inputs = input('Seleccione una opción para continuar\n')
     if int(inputs[0]) == 1:
-        print("Cargando información de los archivos ....")
+        print("\nCreando el catálogo de datos ....")
+        cont = controller.init()
 
     elif int(inputs[0]) == 2:
+        optionTwo(cont)
+
+    elif int(inputs[0]) == 3:
         pass
 
+    elif int(inputs[0]) == 4:
+        pass
+    
+    elif int(inputs[0]) == 5:
+        pass
+
+    elif int(inputs[0]) == 6:
+        pass
+
+    elif int(inputs[0]) == 7:
+        pass
+    
+    elif int(inputs[0]) == 8:
+        pass
     else:
         sys.exit(0)
 sys.exit(0)

@@ -24,14 +24,46 @@ import config as cf
 import model
 import csv
 
-
 """
 El controlador se encarga de mediar entre la vista y el modelo.
 """
 
 # Inicialización del Catálogo de libros
+def init():
+    analyzer = model.newAnalyzer()
+    return analyzer
 
 # Funciones para la carga de datos
+def loadData(cont, connectionsfile, countriesfile, landingpfile):
+    loadLandingPoints(cont, landingpfile)
+    loadConnections(cont, connectionsfile)
+    loadCountries(cont, countriesfile)
+
+def loadLandingPoints(cont, landingpfile):
+    cfile = cf.data_dir + landingpfile
+    input_file = csv.DictReader(open(cfile, encoding="utf-8"),
+                                delimiter=",")
+
+    for i in input_file:
+        model.addLandingPointHash(cont, i)
+
+def loadConnections(cont, connectionsfile):
+    cfile = cf.data_dir + connectionsfile
+    input_file = csv.DictReader(open(cfile, encoding="utf-8"),
+                                delimiter=",")
+
+    for i in input_file:
+        model.addConnection(cont, i)
+        model.addCountryLandingPoint(cont, i)
+
+def loadCountries(cont, countriesfile):
+    cfile = cf.data_dir + countriesfile
+    input_file = csv.DictReader(open(cfile, encoding="utf-8"),
+                                delimiter=",")
+
+    for i in input_file:
+        model.addCountry(cont, i)
+
 
 # Funciones de ordenamiento
 
