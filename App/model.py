@@ -66,18 +66,24 @@ def newAnalyzer():
     analyzer['cables'] = gr.newGraph(datastructure='ADJ_LIST',
                                     directed=True,
                                     size=14000,
-                                    comparefunction=compareValue)
+                                    comparefunction=compareLPs)
+
+    return analyzer
 
 # Funciones para agregar informacion al catalogo
 def addLandingPointHash(analyzer, dic):
-    mp.put(analyzer["landing_points"], dic["landing_point_id"], dic)
+    mp.put(analyzer["landing_points"], int(dic["landing_point_id"]), dic)
     return analyzer
     
 def addConnection(analyzer, dic):
     cable = dic["cable_name"]
-    origin = formatVertex(analyzer, dic["origin"], cable)
+    origin = formatVertex(analyzer, dic['\ufefforigin'], cable)
     destination = formatVertex(analyzer, dic["destination"], cable)
-    distance = float(dic["cable_length"])
+    d = dic["cable_length"].replace(" km", "")
+    if 'n.a.' in d:
+        distance = 0
+    else:
+        distance = float(d.replace(",", ""))
     addLandingPoint(analyzer, origin)
     addLandingPoint(analyzer, destination)
     addCable(analyzer, origin, destination, distance)
@@ -93,7 +99,8 @@ def addCountry(analyzer, dic):
 
 # Funciones de interacción entre estructuras
 def getLandingPointInfo(analyzer, lpid):
-    a = mp.get(analyzer["landing_points"], lpid)
+    map = analyzer['landing_points']
+    a = mp.get(map, int(lpid))
     info = me.getValue(a)
     return info 
 
@@ -122,12 +129,14 @@ def addCapacity(analyzer, connection, capacity):
 def addCountryLandingPoint(analyzer, landingpoint, lpvertex, connection, capacity):
     lpinfo = getLandingPointInfo(analyzer, landingpoint["destination"])
     lpname = lpinfo["name"].split(",")
-    namesize = lpname.size()
+    namesize = len(lpname)
     
     if namesize == 3:
         country = lpname[2].lower().replace(" ", "")
-    else:
+    elif namesize == 2:
         country = lpname[1].lower().replace(" ", "")
+    else:
+        country = "No identified"
     if mp.contains(analyzer['countries_cables'], country):
         a = mp.get(analyzer['countries_cables'], country)
         countrylist = me.getValue(a)
@@ -151,14 +160,33 @@ def addCountryLandingPoint(analyzer, landingpoint, lpvertex, connection, capacit
     return analyzer
 
 # Funciones de consulta
+def totalVertexs(analyzer):
+    return gr.numVertices(analyzer['cables'])
+
+def totalConnections(analyzer):
+    return gr.numEdges(analyzer['cables'])
+
+def totalCountries(analyzer):
+    return mp.size(analyzer['countries'])
+
 # Funciones utilizadas para comparar elementos dentro de una lista
-def compareValue(val1, val2):
-    if (val1 == val2):
+def compareLPs(stop, keyvaluestop):
+    """
+    Compara dos estaciones
+    """
+    stopcode = keyvaluestop['key']
+    if (stop == stopcode):
         return 0
-    elif (val1 > val2):
+    elif (stop > stopcode):
         return 1
     else:
         return -1
+
+def compareValue(val1, val2):
+    if (val1 == val2):
+        return 1
+    else:
+        return 0
 
 def compareCapacity(lp1, lp2):
     if lp1["capacity"] > lp2["capacity"]:

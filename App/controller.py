@@ -44,7 +44,11 @@ def loadLandingPoints(cont, landingpfile):
     input_file = csv.DictReader(open(cfile, encoding="utf-8"),
                                 delimiter=",")
 
+    a = True
     for i in input_file:
+        if a:
+            print(i)
+            a = False
         model.addLandingPointHash(cont, i)
 
 def loadConnections(cont, connectionsfile):
@@ -52,9 +56,12 @@ def loadConnections(cont, connectionsfile):
     input_file = csv.DictReader(open(cfile, encoding="utf-8"),
                                 delimiter=",")
 
+    a = True
     for i in input_file:
+        if a:
+            print(i)
+            a = False
         model.addConnection(cont, i)
-        model.addCountryLandingPoint(cont, i)
 
 def loadCountries(cont, countriesfile):
     cfile = cf.data_dir + countriesfile
@@ -68,3 +75,12 @@ def loadCountries(cont, countriesfile):
 # Funciones de ordenamiento
 
 # Funciones de consulta sobre el catálogo
+def totalVertexs(analyzer):
+    return model.totalVertexs(analyzer)
+
+
+def totalConnections(analyzer):
+    return model.totalConnections(analyzer)
+
+def totalCountries(analyzer):
+    return model.totalCountries(analyzer)
