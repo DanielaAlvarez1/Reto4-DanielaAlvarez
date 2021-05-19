@@ -84,14 +84,26 @@ def addConnection(analyzer, dic):
     connection = origin + destination + cable
     capacity = float(dic["capacityTBPS"])
     addCapacity(analyzer, connection, capacity)
-    addCountryLandingPoint(analyzer, dic["destination"], connection, capacity)
+    addCountryLandingPoint(analyzer, dic, destination, connection, capacity)
     return analyzer
 
 def addCountry(analyzer, dic):
     mp.put(analyzer["countries"], dic["CountryName"], dic)
     return analyzer
 
+# Funciones de interacción entre estructuras
+def getLandingPointInfo(analyzer, lpid):
+    a = mp.get(analyzer["landing_points"], lpid)
+    info = me.getValue(a)
+    return info 
+
 # Funciones para creacion de datos
+def formatVertex(analyzer, landingpoint, cable):
+    lpinfo = getLandingPointInfo(analyzer, landingpoint)
+    name = lpinfo["id"]
+    name = name + '-' + cable
+    return name
+
 def addLandingPoint(analyzer, landingpoint):
     if not gr.containsVertex(analyzer["cables"], landingpoint):
         gr.insertVertex(analyzer["cables"], landingpoint)
@@ -107,10 +119,11 @@ def addCapacity(analyzer, connection, capacity):
     mp.put(analyzer["capacity"], connection, capacity)
     return analyzer
 
-def addCountryLandingPoint(analyzer, landingpoint, connection, capacity):
-    lpinfo = getLandingPointInfo(analyzer, landingpoint)
+def addCountryLandingPoint(analyzer, landingpoint, lpvertex, connection, capacity):
+    lpinfo = getLandingPointInfo(analyzer, landingpoint["destination"])
     lpname = lpinfo["name"].split(",")
     namesize = lpname.size()
+    
     if namesize == 3:
         country = lpname[2].lower().replace(" ", "")
     else:
@@ -120,21 +133,22 @@ def addCountryLandingPoint(analyzer, landingpoint, connection, capacity):
         countrylist = me.getValue(a)
     else:
         countrylist = lt.newList(datastructure= 'ARRAY_LIST')
-    lt.addLast(countrylist, {"name": connection, "capacity": capacity})
+    lt.addLast(countrylist, {"name": connection, "capacity": capacity, "vertex": lpvertex})
+
+    min = 1000000000000000
+    for i in lt.iterator(countrylist):
+        if i["capacity"] < min:
+            min = i["capacity"]
+
+    for i in lt.iterator(countrylist):         
+        if i["vertex"] != lpvertex:
+            addCable(analyzer, lpvertex, i["vertex"], 0.1)
+            connection = lpvertex + i["vertex"] + "IC"
+            addCapacity(analyzer, connection, min)
+
     mp.put(analyzer['countries_cables'], country, countrylist)
+
     return analyzer
-
-def formatVertex(analyzer, landingpoint, cable):
-    lpinfo = getLandingPointInfo(analyzer, landingpoint)
-    name = lpinfo["id"]
-    name = name + '-' + cable
-    return name
-
-# Funciones de interacción entre estructuras
-def getLandingPointInfo(analyzer, lpid):
-    a = mp.get(analyzer["landing_points"], lpid)
-    info = me.getValue(a)
-    return info 
 
 # Funciones de consulta
 # Funciones utilizadas para comparar elementos dentro de una lista
