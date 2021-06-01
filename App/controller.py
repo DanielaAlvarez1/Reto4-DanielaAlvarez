@@ -35,32 +35,30 @@ def init():
 
 # Funciones para la carga de datos
 def loadData(cont, connectionsfile, countriesfile, landingpfile):
-    loadLandingPoints(cont, landingpfile)
+    lp = loadLandingPoints(cont, landingpfile)
     loadConnections(cont, connectionsfile)
-    loadCountries(cont, countriesfile)
+    c = loadCountries(cont, countriesfile)
+    return (lp, c)
 
 def loadLandingPoints(cont, landingpfile):
     cfile = cf.data_dir + landingpfile
     input_file = csv.DictReader(open(cfile, encoding="utf-8"),
                                 delimiter=",")
 
-    a = True
+    a = ""
     for i in input_file:
-        if a:
-            print(i)
-            a = False
+        if a == "":
+            a = i
         model.addLandingPointHash(cont, i)
+
+    return a
 
 def loadConnections(cont, connectionsfile):
     cfile = cf.data_dir + connectionsfile
     input_file = csv.DictReader(open(cfile, encoding="utf-8"),
                                 delimiter=",")
 
-    a = True
     for i in input_file:
-        if a:
-            print(i)
-            a = False
         model.addConnection(cont, i)
 
 def loadCountries(cont, countriesfile):
@@ -68,16 +66,21 @@ def loadCountries(cont, countriesfile):
     input_file = csv.DictReader(open(cfile, encoding="utf-8"),
                                 delimiter=",")
 
+    a = 1
+    b = {}
     for i in input_file:
         model.addCountry(cont, i)
+        a+=1
+        if a == 239:
+            b = i
 
+    return b
 
 # Funciones de ordenamiento
 
 # Funciones de consulta sobre el catálogo
 def totalVertexs(analyzer):
     return model.totalVertexs(analyzer)
-
 
 def totalConnections(analyzer):
     return model.totalConnections(analyzer)

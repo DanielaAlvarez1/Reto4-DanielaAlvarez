@@ -56,11 +56,25 @@ catalog = None
 
 def optionTwo(cont):
     print("\nCargando información de los archivos ....")
-    controller.loadData(cont, connectionsfile, countriesfile, landingpfile)
+    info = controller.loadData(cont, connectionsfile, countriesfile, landingpfile)
     numedges = controller.totalConnections(cont)
     numvertex = controller.totalVertexs(cont)
     numcountries = controller.totalCountries(cont)
-    print('Numero de landing points: ' + str(numvertex))
+    lp = info[0]
+    c = info[1]
+    print("\nInformación del primer landing point cargado:")
+    print("Numero de identificación: " + lp['landing_point_id'])
+    print("Identificador: " + lp['id'])
+    print("Nombre: " + lp['name'])
+    print("Latitud: " + lp['latitude'])
+    print("Longitud: " + lp['longitude'])
+
+    print("\nInformación del ultimo pais cargado:")
+    print("Pais: " + c['CountryName'])
+    print("Población: " + c['Population'])
+    print("Numero de usuarios: " + c['Internet users'])
+
+    print('\nNumero de landing points: ' + str(numvertex))
     print('Numero de cables: ' + str(numedges))
     print('Numero de paises: ' + str(numcountries))
 
@@ -75,8 +89,6 @@ while True:
         cont = controller.init()
 
     elif int(inputs[0]) == 2:
-        for i in cont:
-            print(i)
         optionTwo(cont)
 
     elif int(inputs[0]) == 3:
