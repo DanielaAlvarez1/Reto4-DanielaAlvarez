@@ -31,6 +31,7 @@ from DISClib.ADT import map as mp
 from DISClib.ADT.graph import gr
 from DISClib.DataStructures import mapentry as me
 from DISClib.Algorithms.Sorting import shellsort as sa
+from DISClib.Algorithms.Graphs import scc
 assert cf
 
 """
@@ -47,22 +48,57 @@ def newAnalyzer():
                 'capacity': None,
                 'cables': None,
                 }
+    """
+    Se carga en una tabla de Hash el archivo de countries
+    Llave: Nombre
+    Valor: Diccionario con su información
+    """
     analyzer['countries'] = mp.newMap(numelements=14000,
                                      maptype='PROBING',
                                      comparefunction=compareValue)
 
+    """
+    Se almacena en una tabla de Hash todos los cables que llegan a los paises
+    Llave: Nombre Pais
+    Valor: Lista de diccionarios de las conecciones
+            {"nombre conexion", "capacidad", "nombre vertice"}
+    """
     analyzer['countries_cables'] = mp.newMap(numelements=14000,
                                      maptype='PROBING',
-                                     comparefunction=compareValue)    
+                                     comparefunction=compareValue)   
+
+    """
+    Se almacena la capacidad de cada conexion en una tabla de Hash
+    Llave: Nombre conexion (origen-destino-cable)
+    Valor: Capacidad
+    """ 
 
     analyzer['capacity'] = mp.newMap(numelements=14000,
                                      maptype='PROBING',
                                      comparefunction=compareValue)
 
+    """
+    Se carga en una table de Hash el archivo de landing-points
+    Llave: Id landing point(numero)
+    Valor: Diccionario con la información
+    """
     analyzer['landing_points'] = mp.newMap(numelements=1400,
                                      maptype='PROBING',
                                      comparefunction=compareValue)
 
+    """
+    Se carga en una table de Hash las conexiones de un landing point
+    Llave: Nombre landing point
+    Valor: Lista de vertices
+    """
+    analyzer['landing_points_cables'] = mp.newMap(numelements=1400,
+                                     maptype='PROBING',
+                                     comparefunction=compareValue)
+
+    """
+    Se carga en un grafo las conecciones entre landing points
+    Vertices: <Nombre Landing Point>-<Nombre cable>
+    """
     analyzer['cables'] = gr.newGraph(datastructure='ADJ_LIST',
                                     directed=True,
                                     size=14000,
@@ -107,9 +143,20 @@ def getLandingPointInfo(analyzer, lpid):
 # Funciones para creacion de datos
 def formatVertex(analyzer, landingpoint, cable):
     lpinfo = getLandingPointInfo(analyzer, landingpoint)
-    name = lpinfo["id"]
-    name = name + '-' + cable
+    lpname = lpinfo["name"].split(",")[0]
+    name = lpname + '-' + cable
+    addVertexLandingPoint(analyzer, lpname, name)
     return name
+
+def addVertexLandingPoint(analyzer, lpname, name):
+    if mp.contains(analyzer["landing_points_cables"], lpname):
+        a = mp.get(analyzer["landing_points_cables"], lpname)
+        lplist = me.getValue(a)
+    else:
+        lplist = lt.newList(datastructure= "ARRAY_LIST")
+    if lt.isPresent(lplist, name) == 0:
+        lt.addLast(lplist, name)
+        mp.put(analyzer["landing_points_cables"], lpname, lplist)
 
 def addLandingPoint(analyzer, landingpoint):
     if not gr.containsVertex(analyzer["cables"], landingpoint):
@@ -169,15 +216,35 @@ def totalConnections(analyzer):
 def totalCountries(analyzer):
     return mp.size(analyzer['countries'])
 
+def clustersandlandingpoints(analyzer, lp1, lp2):
+    analyzer['components'] = scc.KosarajuSCC(analyzer['cables'])
+    clusters = scc.connectedComponents(analyzer['components'])
+    a = mp.get(analyzer["landing_points_cables"], lp1)
+    lp1list = me.getValue(a)
+    b = mp.get(analyzer["landing_points_cables"], lp2)
+    lp2list = me.getValue(b)
+#    prueba(analyzer)
+
+    for i in lt.iterator(lp1list):
+        for e in lt.iterator(lp2list):
+            connected = scc.stronglyConnected(analyzer['components'], i, e)
+            if connected:
+                break 
+            
+    return (clusters, connected)
+
+def prueba(analyzer):
+    b = mp.get(analyzer["landing_points_cables"], "Vung Tau")
+    lp2list = me.getValue(b)
+    for i in lt.iterator(lp2list):
+        print(i)
+
 # Funciones utilizadas para comparar elementos dentro de una lista
-def compareLPs(stop, keyvaluestop):
-    """
-    Compara dos estaciones
-    """
-    stopcode = keyvaluestop['key']
-    if (stop == stopcode):
+def compareLPs(lp, keyvaluestop):
+    lpcode = keyvaluestop['key']
+    if (lp == lpcode):
         return 0
-    elif (stop > stopcode):
+    elif (lp > lpcode):
         return 1
     else:
         return -1

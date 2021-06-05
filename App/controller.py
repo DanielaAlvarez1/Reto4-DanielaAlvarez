@@ -87,3 +87,6 @@ def totalConnections(analyzer):
 
 def totalCountries(analyzer):
     return model.totalCountries(analyzer)
+
+def clustersandlandingpoints(cont, lp1, lp2):
+    return model.clustersandlandingpoints(cont, lp1, lp2)

@@ -78,6 +78,18 @@ def optionTwo(cont):
     print('Numero de cables: ' + str(numedges))
     print('Numero de paises: ' + str(numcountries))
 
+def optionthree(cont):
+    lp1 = input("Ingrese el primer landingpoint que desea consultar: ")
+    lp2 = input("Ingrese el segundo landingpoint que desea consultar: ")
+    info = controller.clustersandlandingpoints(cont, lp1, lp2)
+    clusters = info[0]
+    connected = info[1]
+    print("\nHay " + str(clusters) + " componentes conectados")
+    if connected:
+        print("Los landing points " + lp1 + " y " + lp2 + " estan en el mismo cluster")
+    else:
+        print("Los landing points " + lp1 + " y " + lp2 + " estan en el mismo cluster")
+
 """
 Menu principal
 """
@@ -92,7 +104,7 @@ while True:
         optionTwo(cont)
 
     elif int(inputs[0]) == 3:
-        pass
+        optionthree(cont)
 
     elif int(inputs[0]) == 4:
         pass
