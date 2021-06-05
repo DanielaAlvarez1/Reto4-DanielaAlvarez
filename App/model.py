@@ -25,6 +25,7 @@
  """
 
 
+from os import name
 import config as cf
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as mp
@@ -232,6 +233,30 @@ def clustersandlandingpoints(analyzer, lp1, lp2):
                 break 
             
     return (clusters, connected)
+
+def interconexions(analyzer):
+    lps = mp.keySet(analyzer["landing_points"])
+    lpslist = lt.newList(datastructure= "ARRAY_LIST")
+    for i in lt.iterator(lps):
+        dic = {}
+        dic["id"] = i
+        a = mp.get(analyzer["landing_points"], i)
+        lpinfo = me.getValue(a)
+        dic["name"] = lpinfo["name"]
+        namelist = dic["name"].split(",")
+        if len(namelist) == 3:
+            dic["country"] = namelist[2]
+        if len(namelist) == 2:
+            dic["country"] = namelist[1]
+        else:
+            dic["country"] = namelist[0]
+        b = mp.get(analyzer["landing_points_cables"], namelist[0])
+        lplist = me.getValue(b)
+        if lt.size(lplist) > 1:
+            dic["total"] = str(lt.size(lplist))
+            lt.addLast(lpslist, dic)
+
+    return lpslist
 
 def prueba(analyzer):
     b = mp.get(analyzer["landing_points_cables"], "Vung Tau")

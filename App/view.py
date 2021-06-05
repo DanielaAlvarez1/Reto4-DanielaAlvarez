@@ -90,6 +90,14 @@ def optionthree(cont):
     else:
         print("Los landing points " + lp1 + " y " + lp2 + " estan en el mismo cluster")
 
+def optionfour(cont):
+    info = controller.interconexions(cont)
+    for i in lt.iterator(info):
+        tot = str(i["total"])
+        print("El landingpoint " + i["name"] + " con id " + str(i["id"]) + " del pais " + i["country"] + 
+                " interconecta " + tot + " cables")
+        
+
 """
 Menu principal
 """
@@ -107,7 +115,7 @@ while True:
         optionthree(cont)
 
     elif int(inputs[0]) == 4:
-        pass
+        optionfour(cont)
     
     elif int(inputs[0]) == 5:
         pass
