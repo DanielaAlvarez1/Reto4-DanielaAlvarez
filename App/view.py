@@ -79,9 +79,7 @@ def optionTwo(cont):
     print('Numero de cables: ' + str(numedges))
     print('Numero de paises: ' + str(numcountries))
 
-def optionthree(cont):
-    lp1 = input("Ingrese el primer landingpoint que desea consultar: ")
-    lp2 = input("Ingrese el segundo landingpoint que desea consultar: ")
+def optionthree(cont, lp1, lp2):
     info = controller.clustersandlandingpoints(cont, lp1, lp2)
     clusters = info[0]
     connected = info[1]
@@ -98,19 +96,26 @@ def optionfour(cont):
         print("El landingpoint " + i["name"] + " con id " + str(i["id"]) + " del pais " + i["country"] + 
                 " interconecta " + tot + " cables")
         
-def optionfive(cont):
-    p1 = input("Ingrese el primer pais que desea consultar: ").lower().replace(" ", "")
-    p2 = input("Ingrese el segundo pais que desea consultar: ").lower().replace(" ", "")
+def optionfive(cont, p1, p2):
     info = controller.minroute(cont, p1, p2)
     totdis = info[1]
     path = info[0]
-    print("\nLa distancia total del recorrido es: " + str(totdis))
+    print("\nLa distancia total del recorrido es: " + str(totdis) + " km")
     print("\nLa ruta mínima es: ")
     n = 1
     while st.isEmpty(path) == False:
         step = st.pop(path)
-        print(str(n) + ". "+ step["vertexA"] + "-" + step["vertexB"] + ", Distancia: " + str(step["weight"]))
+        print(str(n) + ". "+ step["vertexA"] + "-" + step["vertexB"] + ", Distancia: " + str(step["weight"]) + " km")
         n+=1
+
+def optionsix(cont):
+    info = controller.criticalstructure(cont)
+    nodes = info[0]
+    weight = info[1]
+    #p#ath = info[2]
+    print("\nLa red de expansión mínima cuenta con: " + str(nodes) + " nodos")
+    print("\nEl costo total de la red es: " + str(weight) + " km")
+    #print("\nLa rama mas larga del mst es: " + path)
 
 """
 Menu principal
@@ -126,16 +131,20 @@ while True:
         optionTwo(cont)
 
     elif int(inputs[0]) == 3:
-        optionthree(cont)
+        lp1 = input("Ingrese el primer landingpoint que desea consultar: ")
+        lp2 = input("Ingrese el segundo landingpoint que desea consultar: ")
+        optionthree(cont, lp1, lp2)
 
     elif int(inputs[0]) == 4:
         optionfour(cont)
     
     elif int(inputs[0]) == 5:
+        p1 = input("Ingrese el primer pais que desea consultar: ").lower().replace(" ", "")
+        p2 = input("Ingrese el segundo pais que desea consultar: ").lower().replace(" ", "")
         optionfive(cont)
 
     elif int(inputs[0]) == 6:
-        pass
+        optionsix(cont)
 
     elif int(inputs[0]) == 7:
         pass

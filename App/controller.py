@@ -96,3 +96,6 @@ def interconexions(cont):
 
 def minroute(cont, p1, p2):
     return model.minroute(cont, p1, p2)
+
+def criticalstructure(cont):
+    return model.criticalstructure(cont)

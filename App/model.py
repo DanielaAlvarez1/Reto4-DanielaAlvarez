@@ -27,14 +27,18 @@
 
 from os import name
 from math import radians, cos, sin, asin, sqrt
+from random import randint
 import config as cf
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as mp
+from DISClib.ADT import stack as st
 from DISClib.ADT.graph import gr
 from DISClib.DataStructures import mapentry as me
 from DISClib.Algorithms.Sorting import shellsort as sa
 from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.Algorithms.Graphs import scc
+from DISClib.Algorithms.Graphs import prim as pr
+from DISClib.Algorithms.Graphs import bellmanford as bf
 assert cf
 
 """
@@ -332,11 +336,39 @@ def minroute(analyzer, p1, p2):
         totdis+= i["weight"]
     return (path, totdis)
 
+def criticalstructure(analyzer):
+    analyzer["prim"] = pr.PrimMST(analyzer["cables"])
+    prueba(analyzer)
+    vlist = gr.vertices(analyzer["cables"])
+    randomvertex = lt.getElement(vlist, randint(0, lt.size(vlist)))
+    mst = pr.prim(analyzer["cables"], analyzer["prim"], randomvertex)
+    weight = pr.weightMST(analyzer["cables"], analyzer["prim"])
+    #search = bf.BellmanFord(analyzer["cables"], randomvertex)
+    large = 0
+    largeedge = ""
+    nlps = 0
+    totvertex = mp.keySet(mst["marked"])
+    for i in lt.iterator(totvertex):
+        a = mp.get(mst["marked"], i)
+        value = me.getValue(a)
+        if value == True:
+            nlps+=1
+            #if i != randomvertex:
+                #paths = bf.pathTo(search, i)
+                #if st.size(paths) > large:
+                    #large = st.size(paths)
+                    #largeedge = i
+    return (nlps, weight) #randomvertex + "->" + largeedge)
+
+
 def prueba(analyzer):
-    b = mp.get(analyzer["landing_points_cables"], "Vung Tau")
-    lp2list = me.getValue(b)
-    for i in lt.iterator(lp2list):
-        print(i)
+    b = gr.vertices(analyzer["cables"])
+    a = True
+    for i in lt.iterator(b):
+        if a:
+            print(i)
+            break
+
 
 # Funciones utilizadas para comparar elementos dentro de una lista
 def compareLPs(lp, keyvaluestop):
