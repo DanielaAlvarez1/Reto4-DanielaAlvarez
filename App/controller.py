@@ -93,3 +93,6 @@ def clustersandlandingpoints(cont, lp1, lp2):
 
 def interconexions(cont):
     return model.interconexions(cont)
+
+def minroute(cont, p1, p2):
+    return model.minroute(cont, p1, p2)

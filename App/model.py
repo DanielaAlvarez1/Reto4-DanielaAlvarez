@@ -26,12 +26,14 @@
 
 
 from os import name
+from math import radians, cos, sin, asin, sqrt
 import config as cf
 from DISClib.ADT import list as lt
 from DISClib.ADT import map as mp
 from DISClib.ADT.graph import gr
 from DISClib.DataStructures import mapentry as me
 from DISClib.Algorithms.Sorting import shellsort as sa
+from DISClib.Algorithms.Graphs import dijsktra as djk
 from DISClib.Algorithms.Graphs import scc
 assert cf
 
@@ -109,6 +111,8 @@ def newAnalyzer():
 
 # Funciones para agregar informacion al catalogo
 def addLandingPointHash(analyzer, dic):
+    dic["latitude"] = float(dic["latitude"])
+    dic["longitude"] = float(dic["longitude"])
     mp.put(analyzer["landing_points"], int(dic["landing_point_id"]), dic)
     return analyzer
     
@@ -116,23 +120,66 @@ def addConnection(analyzer, dic):
     cable = dic["cable_name"]
     origin = formatVertex(analyzer, dic['\ufefforigin'], cable)
     destination = formatVertex(analyzer, dic["destination"], cable)
-    d = dic["cable_length"].replace(" km", "")
-    if 'n.a.' in d:
-        distance = 0
-    else:
-        distance = float(d.replace(",", ""))
+    origindic = getLandingPointInfo(analyzer, dic['\ufefforigin'])
+    destinationdic = getLandingPointInfo(analyzer, dic["destination"])
+    lon1 = origindic["longitude"]
+    lat1 = origindic["latitude"]
+    lon2 = destinationdic["longitude"]
+    lat2 = destinationdic["latitude"]
+    distance = haversine(lon1, lat1, lon2, lat2)
+#    d = dic["cable_length"].replace(" km", "")
+#    if 'n.a.' in d:
+#       distance = 0
+#    else:
+#       distance = float(d.replace(",", ""))
     addLandingPoint(analyzer, origin)
     addLandingPoint(analyzer, destination)
     addCable(analyzer, origin, destination, distance)
     connection = origin + destination + cable
     capacity = float(dic["capacityTBPS"])
+    destinationdic["destination"] = destination
     addCapacity(analyzer, connection, capacity)
-    addCountryLandingPoint(analyzer, dic, destination, connection, capacity)
+    addCountryLandingPoint(analyzer, dic, destinationdic, connection, capacity)
     return analyzer
 
 def addCountry(analyzer, dic):
-    mp.put(analyzer["countries"], dic["CountryName"], dic)
-    return analyzer
+    if dic["CapitalName"] == "":
+        return None
+    else: 
+        capital = dic["CapitalName"] #+ ", " + dic["CountryName"]
+        clat = float(dic["CapitalLatitude"])
+        clon = float(dic["CapitalLongitude"])
+        addLandingPoint(analyzer, capital)
+        country = dic["CountryName"].lower().replace(" ", "")
+        a = mp.get(analyzer['countries_cables'], country)
+        if a == None:
+            mind = 10**15
+            nlp = ""
+            lps = mp.keySet(analyzer['landing_points'])
+            for e in lt.iterator(lps):
+                b = mp.get(analyzer['landing_points'], e)
+                edic = me.getValue(b)
+                distance = haversine(clon, clat, edic["longitude"], edic["latitude"])
+                if distance < mind:
+                    mind = distance
+                    nlp = edic["name"]
+            c = mp.get(analyzer['landing_points_cables'], nlp)
+            lpvertexs = me.getValue(c)
+            lpvertex = lt.getElement(lpvertexs, 0)
+            addCable(analyzer, capital, lpvertex, mind)
+            addCable(analyzer, lpvertex, capital, mind)
+            connection = capital + "-" + lpvertex + "-" + "CC"
+            addCapacity(analyzer, connection, 12.8) 
+        else:
+            clist = me.getValue(a)
+            for i in lt.iterator(clist):
+                distance = haversine(clon, clat, i["longitude"], i["latitude"])
+                addCable(analyzer, capital, i["vertex"], distance)
+                addCable(analyzer, i["vertex"], capital, distance)
+                connection = capital + "-" + i["vertex"] + "-" + "CC"
+                addCapacity(analyzer, connection, i["mincapacity"])
+        mp.put(analyzer["countries"], dic["CountryName"].lower().replace(" ", ""), dic)
+        return analyzer
 
 # Funciones de interacción entre estructuras
 def getLandingPointInfo(analyzer, lpid):
@@ -144,7 +191,7 @@ def getLandingPointInfo(analyzer, lpid):
 # Funciones para creacion de datos
 def formatVertex(analyzer, landingpoint, cable):
     lpinfo = getLandingPointInfo(analyzer, landingpoint)
-    lpname = lpinfo["name"].split(",")[0]
+    lpname = lpinfo["name"]
     name = lpname + '-' + cable
     addVertexLandingPoint(analyzer, lpname, name)
     return name
@@ -174,9 +221,12 @@ def addCapacity(analyzer, connection, capacity):
     mp.put(analyzer["capacity"], connection, capacity)
     return analyzer
 
-def addCountryLandingPoint(analyzer, landingpoint, lpvertex, connection, capacity):
+def addCountryLandingPoint(analyzer, landingpoint, lpvertexdic, connection, capacity):
     lpinfo = getLandingPointInfo(analyzer, landingpoint["destination"])
     lpname = lpinfo["name"].split(",")
+    lpvertex = lpvertexdic["destination"]
+    lat = lpvertexdic["latitude"]
+    lon = lpvertexdic["longitude"]
     namesize = len(lpname)
     
     if namesize == 3:
@@ -190,9 +240,10 @@ def addCountryLandingPoint(analyzer, landingpoint, lpvertex, connection, capacit
         countrylist = me.getValue(a)
     else:
         countrylist = lt.newList(datastructure= 'ARRAY_LIST')
-    lt.addLast(countrylist, {"name": connection, "capacity": capacity, "vertex": lpvertex})
+    lt.addLast(countrylist, {"name": connection, "capacity": capacity, "vertex": lpvertex,
+                                "latitude": lat, "longitude": lon, "mincapacity": 0})
 
-    min = 1000000000000000
+    min = 10**15
     for i in lt.iterator(countrylist):
         if i["capacity"] < min:
             min = i["capacity"]
@@ -200,8 +251,9 @@ def addCountryLandingPoint(analyzer, landingpoint, lpvertex, connection, capacit
     for i in lt.iterator(countrylist):         
         if i["vertex"] != lpvertex:
             addCable(analyzer, lpvertex, i["vertex"], 0.1)
-            connection = lpvertex + i["vertex"] + "IC"
+            connection = lpvertex + "-" + i["vertex"] + "-" + "IC"
             addCapacity(analyzer, connection, min)
+            i["mincapacity"] = min
 
     mp.put(analyzer['countries_cables'], country, countrylist)
 
@@ -216,6 +268,16 @@ def totalConnections(analyzer):
 
 def totalCountries(analyzer):
     return mp.size(analyzer['countries'])
+
+def haversine(lon1, lat1, lon2, lat2):
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+
+    dlon = lon2 - lon1 
+    dlat = lat2 - lat1 
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * asin(sqrt(a)) 
+    r = 6371 
+    return c * r
 
 def clustersandlandingpoints(analyzer, lp1, lp2):
     analyzer['components'] = scc.KosarajuSCC(analyzer['cables'])
@@ -250,13 +312,25 @@ def interconexions(analyzer):
             dic["country"] = namelist[1]
         else:
             dic["country"] = namelist[0]
-        b = mp.get(analyzer["landing_points_cables"], namelist[0])
+        b = mp.get(analyzer["landing_points_cables"], dic["name"])
         lplist = me.getValue(b)
         if lt.size(lplist) > 1:
             dic["total"] = str(lt.size(lplist))
             lt.addLast(lpslist, dic)
 
     return lpslist
+
+def minroute(analyzer, p1, p2):
+    a = mp.get(analyzer["countries"], p1)
+    cap1 = me.getValue(a)["CapitalName"]
+    b = mp.get(analyzer["countries"], p2)
+    cap2 = me.getValue(b)["CapitalName"]
+    analyzer['paths'] = djk.Dijkstra(analyzer['cables'], cap1)
+    path = djk.pathTo(analyzer['paths'], cap2)
+    totdis = 0
+    for i in lt.iterator(path):
+        totdis+= i["weight"]
+    return (path, totdis)
 
 def prueba(analyzer):
     b = mp.get(analyzer["landing_points_cables"], "Vung Tau")

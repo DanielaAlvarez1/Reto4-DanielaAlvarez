@@ -24,6 +24,7 @@ import config as cf
 import sys
 import controller
 from DISClib.ADT import list as lt
+from DISClib.ADT import stack as st
 assert cf
 
 
@@ -66,8 +67,8 @@ def optionTwo(cont):
     print("Numero de identificación: " + lp['landing_point_id'])
     print("Identificador: " + lp['id'])
     print("Nombre: " + lp['name'])
-    print("Latitud: " + lp['latitude'])
-    print("Longitud: " + lp['longitude'])
+    print("Latitud: " + str(lp['latitude']))
+    print("Longitud: " + str(lp['longitude']))
 
     print("\nInformación del ultimo pais cargado:")
     print("Pais: " + c['CountryName'])
@@ -97,6 +98,19 @@ def optionfour(cont):
         print("El landingpoint " + i["name"] + " con id " + str(i["id"]) + " del pais " + i["country"] + 
                 " interconecta " + tot + " cables")
         
+def optionfive(cont):
+    p1 = input("Ingrese el primer pais que desea consultar: ").lower().replace(" ", "")
+    p2 = input("Ingrese el segundo pais que desea consultar: ").lower().replace(" ", "")
+    info = controller.minroute(cont, p1, p2)
+    totdis = info[1]
+    path = info[0]
+    print("\nLa distancia total del recorrido es: " + str(totdis))
+    print("\nLa ruta mínima es: ")
+    n = 1
+    while st.isEmpty(path) == False:
+        step = st.pop(path)
+        print(str(n) + ". "+ step["vertexA"] + "-" + step["vertexB"] + ", Distancia: " + str(step["weight"]))
+        n+=1
 
 """
 Menu principal
@@ -118,7 +132,7 @@ while True:
         optionfour(cont)
     
     elif int(inputs[0]) == 5:
-        pass
+        optionfive(cont)
 
     elif int(inputs[0]) == 6:
         pass
