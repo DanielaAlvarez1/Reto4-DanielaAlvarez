@@ -99,3 +99,6 @@ def minroute(cont, p1, p2):
 
 def criticalstructure(cont):
     return model.criticalstructure(cont)
+
+def lpdamage(cont, lp):
+    return model.lpdamage(cont, lp)

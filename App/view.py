@@ -117,6 +117,15 @@ def optionsix(cont):
     print("\nEl costo total de la red es: " + str(weight) + " km")
     #print("\nLa rama mas larga del mst es: " + path)
 
+def optionseven(cont, lp):
+    info = controller.lpdamage(cont, lp)
+    countries = info[0]
+    num = info[1]
+    print("\nCon la caida de este landing point se afectarian " + str(num) + " paises")
+    print("\nEstos son: ")
+    for i in lt.iterator(countries):
+        print(i["country"] + ", Distancia: " + str(i["distance"]))
+
 """
 Menu principal
 """
@@ -147,7 +156,8 @@ while True:
         optionsix(cont)
 
     elif int(inputs[0]) == 7:
-        pass
+        lp = input("Ingrese el nombre del landingpoint que desea consultar: ")
+        optionseven(cont, lp)
     
     elif int(inputs[0]) == 8:
         pass

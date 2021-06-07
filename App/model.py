@@ -25,6 +25,7 @@
  """
 
 
+from DISClib.ADT.indexminpq import size
 from os import name
 from math import radians, cos, sin, asin, sqrt
 from random import randint
@@ -131,11 +132,6 @@ def addConnection(analyzer, dic):
     lon2 = destinationdic["longitude"]
     lat2 = destinationdic["latitude"]
     distance = haversine(lon1, lat1, lon2, lat2)
-#    d = dic["cable_length"].replace(" km", "")
-#    if 'n.a.' in d:
-#       distance = 0
-#    else:
-#       distance = float(d.replace(",", ""))
     addLandingPoint(analyzer, origin)
     addLandingPoint(analyzer, destination)
     addCable(analyzer, origin, destination, distance)
@@ -150,7 +146,7 @@ def addCountry(analyzer, dic):
     if dic["CapitalName"] == "":
         return None
     else: 
-        capital = dic["CapitalName"] #+ ", " + dic["CountryName"]
+        capital = dic["CapitalName"] 
         clat = float(dic["CapitalLatitude"])
         clon = float(dic["CapitalLongitude"])
         addLandingPoint(analyzer, capital)
@@ -166,7 +162,7 @@ def addCountry(analyzer, dic):
                 distance = haversine(clon, clat, edic["longitude"], edic["latitude"])
                 if distance < mind:
                     mind = distance
-                    nlp = edic["name"]
+                    nlp = edic["name"].split(",")[0]
             c = mp.get(analyzer['landing_points_cables'], nlp)
             lpvertexs = me.getValue(c)
             lpvertex = lt.getElement(lpvertexs, 0)
@@ -200,7 +196,8 @@ def formatVertex(analyzer, landingpoint, cable):
     addVertexLandingPoint(analyzer, lpname, name)
     return name
 
-def addVertexLandingPoint(analyzer, lpname, name):
+def addVertexLandingPoint(analyzer, lp, name):
+    lpname = lp.split(",")[0]
     if mp.contains(analyzer["landing_points_cables"], lpname):
         a = mp.get(analyzer["landing_points_cables"], lpname)
         lplist = me.getValue(a)
@@ -208,7 +205,7 @@ def addVertexLandingPoint(analyzer, lpname, name):
         lplist = lt.newList(datastructure= "ARRAY_LIST")
     if lt.isPresent(lplist, name) == 0:
         lt.addLast(lplist, name)
-        mp.put(analyzer["landing_points_cables"], lpname, lplist)
+    mp.put(analyzer["landing_points_cables"], lpname, lplist)
 
 def addLandingPoint(analyzer, landingpoint):
     if not gr.containsVertex(analyzer["cables"], landingpoint):
@@ -290,7 +287,6 @@ def clustersandlandingpoints(analyzer, lp1, lp2):
     lp1list = me.getValue(a)
     b = mp.get(analyzer["landing_points_cables"], lp2)
     lp2list = me.getValue(b)
-#    prueba(analyzer)
 
     for i in lt.iterator(lp1list):
         for e in lt.iterator(lp2list):
@@ -308,8 +304,8 @@ def interconexions(analyzer):
         dic["id"] = i
         a = mp.get(analyzer["landing_points"], i)
         lpinfo = me.getValue(a)
-        dic["name"] = lpinfo["name"]
-        namelist = dic["name"].split(",")
+        namelist = lpinfo["name"].split(",")
+        dic["name"] = namelist[0]
         if len(namelist) == 3:
             dic["country"] = namelist[2]
         if len(namelist) == 2:
@@ -338,14 +334,10 @@ def minroute(analyzer, p1, p2):
 
 def criticalstructure(analyzer):
     analyzer["prim"] = pr.PrimMST(analyzer["cables"])
-    prueba(analyzer)
     vlist = gr.vertices(analyzer["cables"])
     randomvertex = lt.getElement(vlist, randint(0, lt.size(vlist)))
     mst = pr.prim(analyzer["cables"], analyzer["prim"], randomvertex)
     weight = pr.weightMST(analyzer["cables"], analyzer["prim"])
-    #search = bf.BellmanFord(analyzer["cables"], randomvertex)
-    large = 0
-    largeedge = ""
     nlps = 0
     totvertex = mp.keySet(mst["marked"])
     for i in lt.iterator(totvertex):
@@ -353,22 +345,31 @@ def criticalstructure(analyzer):
         value = me.getValue(a)
         if value == True:
             nlps+=1
-            #if i != randomvertex:
-                #paths = bf.pathTo(search, i)
-                #if st.size(paths) > large:
-                    #large = st.size(paths)
-                    #largeedge = i
-    return (nlps, weight) #randomvertex + "->" + largeedge)
+    return (nlps, weight) 
 
+def lpdamage(analyzer, lp):
+    a = mp.get(analyzer['landing_points_cables'], lp)
+    vertexs = me.getValue(a)
+    countries = lt.newList(datastructure= "ARRAY_LIST", cmpfunction= compareValue)
+    for i in lt.iterator(vertexs):
+        adj = gr.adjacentEdges(analyzer["cables"], i)
+        for i in lt.iterator(adj):
+            v = ["vertexA", "vertexB"]
+            for e in v:
+                nm = i[e].split("-")[0]
+                name = nm.split(",")
+                if len(name) == 3:
+                    country = name[2]
+                elif len(name) == 2:
+                    country = name[1]
+                else:
+                    country = name[0]
+                if lt.isPresent(countries, country) == 0:
+                    if i["weight"] != 0.1:
+                        lt.addLast(countries, {"country": country, "distance": i["weight"]})
 
-def prueba(analyzer):
-    b = gr.vertices(analyzer["cables"])
-    a = True
-    for i in lt.iterator(b):
-        if a:
-            print(i)
-            break
-
+    sort(countries, compareDistance)
+    return (countries, lt.size(countries))
 
 # Funciones utilizadas para comparar elementos dentro de una lista
 def compareLPs(lp, keyvaluestop):
@@ -388,6 +389,12 @@ def compareValue(val1, val2):
 
 def compareCapacity(lp1, lp2):
     if lp1["capacity"] > lp2["capacity"]:
+        return True
+    else:
+        return False
+
+def compareDistance(lp1, lp2):
+    if lp1["distance"] > lp2["distance"]:
         return True
     else:
         return False
