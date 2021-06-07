@@ -353,10 +353,10 @@ def lpdamage(analyzer, lp):
     countries = lt.newList(datastructure= "ARRAY_LIST", cmpfunction= compareValue)
     for i in lt.iterator(vertexs):
         adj = gr.adjacentEdges(analyzer["cables"], i)
-        for i in lt.iterator(adj):
+        for e in lt.iterator(adj):
             v = ["vertexA", "vertexB"]
-            for e in v:
-                nm = i[e].split("-")[0]
+            for z in v:
+                nm = e[z].split("-")[0]
                 name = nm.split(",")
                 if len(name) == 3:
                     country = name[2]
@@ -365,8 +365,8 @@ def lpdamage(analyzer, lp):
                 else:
                     country = name[0]
                 if lt.isPresent(countries, country) == 0:
-                    if i["weight"] != 0.1:
-                        lt.addLast(countries, {"country": country, "distance": i["weight"]})
+                    if e["weight"] != 0.1:
+                        lt.addLast(countries, {"country": country, "distance": e["weight"]})
 
     sort(countries, compareDistance)
     return (countries, lt.size(countries))
